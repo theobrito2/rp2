@@ -1,0 +1,197 @@
+%
+% Template for RBIE papers in LaTeX
+%
+\documentclass[brazilian, english, spanish]{RBIEarticle}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{colortbl}
+\definecolor{gray}{gray}{.8}
+\usepackage{graphicx}
+\usepackage{booktabs} 
+\usepackage{longtable} % Adicionado para o cronograma
+
+% Citations and references (Biblatex)
+\usepackage[style=apa]{biblatex}
+\usepackage{csquotes}
+\addbibresource{references.bib} % Certifique-se de ter um arquivo references.bib
+
+% Here goes the paper main title
+\title{Identificação dos principais fatores que resultam em evasão de alunos de graduação nas universidades de São Paulo}
+\titleinenglish{Identification of the Main Factors Leading to Undergraduate Student Dropout in São Paulo Universities}
+\titleinspanish{Identificación de los Principales Factores que Conducen a la Deserción de Estudiantes de Pregrado en las Universidades de São Paulo}
+
+% Author information
+\author{%
+	\parbox{4cm}{%
+		Pedro Guilherme Fioravanti \\
+		USP\\
+		NUSP : 10764954\\
+	}
+	\parbox{4cm}{%
+		Oliver Koji Toyoki Kuramae\\
+		USP\\
+		NUSP : 14601326\\
+	}
+    \parbox{4cm}{%
+		Tiago Hudler \\
+		USP\\
+		NUSP : 11204641\\
+	}
+	\parbox{4cm}{%
+		Theo Djrdjrjan Brito\\
+		USP\\
+		NUSP : 13688367\\
+	}
+}
+\Submission{dd/Mmm/yyyy}
+\First_round_notif{dd/Mmm/yyyy}
+\New_version{dd/Mmm/yyyy}
+\Second_round_notif{dd/Mmm/yyyy}
+\Camera_ready{dd/Mmm/yyyy}
+\Edition_review{dd/Mmm/yyyy}
+\Available_online{dd/Mmm/yyyy}
+\Published{dd/Mmm/yyyy}
+
+\heading{Fioravanti, Kuramae, Hudler, Brito}{RBIE 1.00 – 2025}
+
+\begin{document}
+\maketitle
+\begin{otherlanguage}{brazilian}
+\begin{abstract}
+\textit{Este estudo emprega técnicas de Mineração de Dados Educacionais (MDE) para investigar os fatores associados à evasão em cursos de graduação nas universidades do estado de São Paulo. Utilizando microdados do Censo da Educação Superior (INEP), o projeto visa construir e avaliar modelos de aprendizado de máquina, como Regressão Logística, Árvores de Decisão e Random Forest, para a tarefa de classificação binária (evadido/não evadido). O objetivo é não apenas prever o risco de evasão, mas também identificar as variáveis socioeconômicas, institucionais e de histórico educacional mais determinantes. Adicionalmente, Modelos de Linguagem de Grande Escala (LLMs) serão utilizados para contextualizar os achados e gerar hipóteses explicativas sobre as dinâmicas do fenômeno, buscando oferecer uma compreensão aprofundada para subsidiar políticas de permanência estudantil.}
+\keywords{Evasão no Ensino Superior, Aprendizado de Máquina, Modelagem Preditiva, Mineração de Dados Educacionais (MDE), Censo da Educação Superior}
+\end{abstract}
+\end{otherlanguage}
+\begin{otherlanguage}{english}
+\begin{abstract}
+This study employs Educational Data Mining (EDM) techniques to investigate the factors associated with dropout in undergraduate courses at universities in the state of São Paulo. Using microdata from the Higher Education Census (INEP) , the project aims to build and evaluate machine learning models, such as Logistic Regression, Decision Trees, and Random Forest, for the binary classification task (dropout/non-dropout). The objective is not only to predict the risk of dropout but also to identify the most determining socioeconomic, institutional, and educational history variables. Additionally, Large Language Models (LLMs) will be used to contextualize the findings and generate explanatory hypotheses about the dynamics of the phenomenon , seeking to offer an in-depth understanding to support student retention policies.
+\keywords{Higher Education Dropout, Machine Learning, Predictive Modeling, Educational Data Mining (EDM), Higher Education Census}
+\end{abstract}
+\end{otherlanguage}
+\begin{otherlanguage}{spanish}
+\begin{abstract}
+Este estudio emplea técnicas de Minería de Datos Educativos (MDE) para investigar los factores asociados a la deserción en carreras de grado en las universidades del estado de São Paulo. Utilizando microdatos del Censo de Educación Superior (INEP) , el proyecto busca construir y evaluar modelos de aprendizaje automático, como Regresión Logística, Árboles de Decisión y Random Forest, para la tarea de clasificación binaria (desertor/no desertor). El objetivo no es solo predecir el riesgo de deserción, sino también identificar las variables socioeconómicas, institucionales y de historial educativo más determinantes. Adicionalmente, se utilizarán Modelos de Lenguaje Grandes (LLMs) para contextualizar los hallazgos y generar hipótesis explicativas sobre las dinámicas del fenómeno , buscando ofrecer una comprensión profunda que sirva de base para políticas de permanencia estudiantil.
+\keywords{Deserción en la Educación Superior, Aprendizaje Automático, Modelado Predictivo, Minería de Datos Educativos (MDE), Censo de Educación Superior}
+\end{abstract}
+\end{otherlanguage}
+
+%====================================================================
+\section{Introdução}
+A evasão no ensino superior é um desafio persistente e multifatorial que impacta a trajetória dos estudantes, a eficiência das instituições de ensino e o desenvolvimento social e econômico do país. Compreender os fatores que levam um aluno a interromper seus estudos é fundamental para a criação de políticas públicas e institucionais mais eficazes de apoio à permanência. Este trabalho se propõe a investigar esse fenômeno, com um foco específico no contexto das universidades, públicas e privadas, do estado de São Paulo. O objetivo central é identificar os principais fatores associados à evasão na graduação e, a partir deles, desenvolver modelos preditivos que possam estimar o risco de um aluno evadir, avaliando as diferenças entre cursos, áreas do conhecimento, turnos e perfis socioeconômicos.
+
+\section{Fundamentos Teóricos}
+A abordagem metodológica deste projeto está fundamentada em conceitos de Mineração de Dados Educacionais (MDE), que consiste na aplicação de métodos computacionais para extrair conhecimento de grandes volumes de dados provenientes de ambientes educacionais. Os principais fundamentos técnicos a serem empregados incluem:
+\begin{itemize}
+    \item \textbf{Classificação Binária:} Tarefa de aprendizado de máquina supervisionado que consiste em categorizar um item em uma de duas classes. Neste estudo, as classes serão "evadido" e "não evadido".
+    \item \textbf{Regressão Logística:} Um modelo estatístico utilizado como baseline por sua simplicidade e alta interpretabilidade para problemas de classificação.
+    \item \textbf{Árvores de Decisão:} Modelos que utilizam uma estrutura de árvore para tomar decisões, permitindo visualizar as regras e os limiares que influenciam o resultado.
+    \item \textbf{Random Forest:} Um método de ensemble que constrói múltiplas árvores de decisão para melhorar a acurácia preditiva e evitar o sobreajuste, além de fornecer métricas de importância das variáveis.
+    \item \textbf{Modelos de Linguagem de Grande Escala (LLMs):} Serão utilizados modelos como ChatGPT e Gemini para realizar uma análise qualitativa dos resultados, auxiliando na contextualização e na geração de hipóteses explicativas.
+\end{itemize}
+
+\section{Trabalhos Relacionados}
+A pesquisa se baseia em estudos anteriores que aplicaram ciência de dados a grandes bases educacionais. Os trabalhos de referência para este projeto são:
+\begin{itemize}
+    \item SILVA, Jailma Januário da. \textit{Uma comparação de técnicas de Aprendizado de Máquina para predição de evasão de estudantes no ensino público superior}. 2022. 77 p. Dissertação (Mestrado em Ciências) – Programa de Pós-Graduação em Sistemas de Informação, Escola de Artes, Ciências e Humanidades, Universidade de São Paulo, São Paulo, 2022. Este trabalho é diretamente relevante, pois realiza uma análise comparativa entre múltiplos algoritmos de aprendizado de máquina (incluindo Árvores de Decisão e Random Forest) para prever a evasão de estudantes no ensino superior. Seus resultados e metodologia podem fornecer uma base sólida para a seleção de modelos e métricas de avaliação a serem utilizadas no presente estudo.
+    \item GOMES, Matheus; HIRATA, Guilherme. \textit{Determinantes da evasão no ensino superior: uma abordagem de riscos competitivos}. Pesquisa e Planejamento Econômico, v. 52, n. 3, p. 9-37, dez. 2022. Este artigo analisa os fatores de risco associados à evasão no ensino superior brasileiro, servindo como base comparativa para a identificação do perfil do aluno evadido.
+
+\end{itemize}
+
+\section{Método}
+Este estudo utilizará uma metodologia estruturada de Mineração de Dados Educacionais (MDE), dividida em quatro fases principais para identificar e explicar os fatores associados à evasão de estudantes de graduação em São Paulo.
+\begin{enumerate}
+    \item \textbf{Coleta e Estruturação dos Dados}
+    \begin{itemize}
+        \item \textit{Fonte:} Os dados serão coletados primariamente dos microdados do Censo da Educação Superior, disponibilizados pelo INEP, devido à sua abrangência e confiabilidade, e também os dados abertos do MEC.
+        \item \textit{Escopo:} A análise será delimitada a uma coorte de estudantes ingressantes em um ano específico em universidades públicas e privadas do estado de São Paulo.
+        \item \textit{Acompanhamento:} Dados de edições subsequentes do Censo serão integrados para permitir o acompanhamento longitudinal da trajetória de cada estudante, identificando seu desfecho acadêmico (conclusão, permanência ou evasão).
+    \end{itemize}
+    \item \textbf{Pré-processamento e Preparação dos Dados}
+    \begin{itemize}
+        \item \textit{Variável-Alvo:} A evasão será definida como um atributo binário (1 para evadido, 0 para não evadido). Um aluno será considerado evadido se, após um período pré-definido, não constar mais como matriculado ou concluinte.
+        \item \textit{Variáveis Preditivas:} Serão selecionadas características do aluno e de seu contexto, incluindo: Dados Socioeconômicos (Renda familiar, escolaridade dos pais, cor/raça), Dados Institucionais (Categoria da IES, área do conhecimento e turno) e Histórico Educacional (Tipo de escola no ensino médio e forma de ingresso).
+        \item \textit{Tratamento:} Será realizada a imputação de valores ausentes e a transformação de variáveis categóricas em formato numérico via One-Hot Encoding.
+    \end{itemize}
+    \item \textbf{Modelagem Preditiva e Analítica}
+    \begin{itemize}
+        \item \textit{Abordagem:} O problema será tratado como uma tarefa de classificação binária. O conjunto de dados será dividido de forma estratificada em 80\% para treinamento e 20\% para teste.
+        \item \textit{Algoritmos:} Serão treinados e comparados a Regressão Logística, Árvores de Decisão e Random Forest.
+        \item \textit{Análise Qualitativa:} LLMs (ChatGPT e Gemini) serão empregados para contextualizar os fatores mais preditivos.
+    \end{itemize}
+    \item \textbf{Avaliação e Interpretação dos Resultados}
+    \begin{itemize}
+        \item \textit{Métricas:} O desempenho dos modelos será avaliado por meio da matriz de confusão, acurácia, precisão, recall, F1-Score e curva ROC (AUC).
+        \item \textit{Análise Final:} O resultado principal será a análise da importância das variáveis (feature importance), permitindo ranquear os fatores mais determinantes para a evasão.
+    \end{itemize}
+\end{enumerate}
+
+%====================================================================
+\section{Resultados Parciais}
+A fase de modelagem e avaliação revelou insights significativos tanto sobre a capacidade preditiva dos algoritmos quanto sobre os fatores determinantes da evasão. Os resultados são apresentados em duas partes: o desempenho comparativo dos modelos e a análise de importância das variáveis.
+
+\subsection{Desempenho Comparativo dos Modelos Preditivos}
+Os modelos foram treinados e avaliados em um conjunto de teste com 10.000 registros, não vistos durante o treinamento. A Tabela 1 apresenta as principais métricas de desempenho. O modelo Random Forest demonstrou uma superioridade notável, especialmente na métrica de Recall para a classe "Evadidos", indicando uma maior capacidade de identificar corretamente os estudantes em risco de evasão.
+
+\begin{table}[h!]
+\centering
+\caption{Desempenho Comparativo dos Modelos de Classificação}
+\label{tab:desempenho}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{AUC-ROC} & \textbf{Recall (Evadidos)} & \textbf{Precisão (Evadidos)} \\
+\midrule
+Regressão Logística & 81.2\% & 0.835 & 43\% & 70\% \\
+Árvore de Decisão & 82.5\% & 0.763 & 54\% & 69\% \\
+\rowcolor{gray}
+\textbf{Random Forest} & \textbf{86.5\%} & \textbf{0.891} & \textbf{58\%} & \textbf{83\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fatores Determinantes da Evasão (Feature Importance)}
+Utilizando o modelo Random Forest, que apresentou o melhor desempenho, foi possível extrair a importância relativa de cada variável na predição da evasão. Os resultados, ranqueados abaixo, indicam que o perfil socioeconômico e as condições de estudo são mais impactantes do que fatores demográficos isolados.
+
+\begin{itemize}
+    \item \textbf{Renda Familiar (Até 1,5 salário mínimo):}
+    \begin{itemize}
+        \item \textit{Importância Relativa: 21.6\%}
+        \item Principal fator. Evidencia que a vulnerabilidade financeira é o maior gatilho para a interrupção dos estudos.
+    \end{itemize}
+
+    \item \textbf{Turno do Curso (Noturno):}
+    \begin{itemize}
+        \item \textit{Importância Relativa: 18.3\%}
+        \item Forte indicador de evasão, associado a alunos que trabalham e enfrentam uma dupla jornada.
+    \end{itemize}
+
+    \item \textbf{Idade do Aluno:}
+    \begin{itemize}
+        \item \textit{Importância Relativa: 15.0\%}
+        \item Alunos mais velhos tendem a evadir mais, possivelmente por maiores responsabilidades externas (família, carreira).
+    \end{itemize}
+\end{itemize}
+
+%====================================================================
+\section{Discussão e Conclusão}
+O presente estudo teve como objetivo não apenas construir um modelo preditivo acurado, mas, fundamentalmente, identificar e compreender os fatores determinantes da evasão. A aplicação de um modelo de Random Forest (Acurácia: 86.5\%, AUC-ROC: 0.891) confirmou a viabilidade de se prever o risco de evasão com alta confiança. A contribuição mais significativa reside na interpretação da importância das variáveis, que descortina um panorama claro sobre as causas da interrupção dos estudos.
+
+\subsection{Síntese e Interpretação dos Fatores Determinantes}
+A análise revelou que a evasão é condicionada por uma intersecção de vulnerabilidades socioeconômicas e desafios estruturais. A baixa renda familiar emergiu como o fator primordial, representando um ecossistema de barreiras (necessidade de trabalhar, custos, estresse financeiro). O Turno Noturno atuou como um forte indicativo do perfil do aluno-trabalhador, que enfrenta uma dupla jornada exaustiva. Adicionalmente, a "Idade" como fator de risco sugere que alunos mais velhos, com responsabilidades consolidadas, encaram a evasão como uma escolha racional diante de prioridades concorrentes.
+
+\subsection{Implicações e Recomendações}
+Os achados permitem a formulação de recomendações estratégicas. Para as \textbf{IES}, sugere-se o fortalecimento da assistência estudantil (alimentação, transporte) e a adaptação pedagógica ao aluno-trabalhador (horários flexíveis, aulas gravadas). Para as \textbf{Políticas Públicas}, recomenda-se a ampliação de programas de renda integrados às políticas educacionais.
+
+\subsection{Limitações e Trabalhos Futuros}
+A amostra feita é relativamente pequena em comparação ao banco de dados total, portanto aumentar o número da amostra pode melhorar significamente os resultados, assim como melhorar os modelos num geral.
+
+%====================================================================
+\printbibliography
+
+%====================================================================
+\section{Referências}
+\begin{itemize}
+    \item PONTES, Maurício Matoso de. \textit{Um estudo comparativo da análise dos erros nos descritores das avaliações em larga escala SPAECE e SAEB com aplicação da ciência de dados}. 2023. 47 f. Monografia (Graduação em Ciência da Computação) – Universidade Federal do Ceará, Russas, 2023. Este estudo, embora focado em avaliações da educação básica, demonstra a viabilidade e o potencial da aplicação de técnicas de ciência de dados em microdados educacionais para extrair insights relevantes, uma abordagem similar à pretendida neste projeto.
+    \item SILVA, Jailma Januário da. \textit{Uma comparação de técnicas de Aprendizado de Máquina para predição de evasão de estudantes no ensino público superior}. 2022. 77 p. Dissertação (Mestrado em Ciências) – Programa de Pós-Graduação em Sistemas de Informação, Escola de Artes, Ciências e Humanidades, Universidade de São Paulo, São Paulo, 2022. Este trabalho é diretamente relevante, pois realiza uma análise comparativa entre múltiplos algoritmos de aprendizado de máquina para prever a evasão de estudantes no ensino superior.
+    \item LINK DO BANCO DE DADOS : \url{https://drive.google.com/file/d/1h62bw9tx3miF1o1KYhmgTKu2YV0F__Qy/view?usp=sharing}
+
+\end{document}
