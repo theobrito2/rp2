@@ -1,0 +1,3 @@
+extra-index-url = ["https://pypi.anaconda.org/rapidsai-wheels-nightly/simple", "https://download.pytorch.org/whl/cu124"]
+index-strategy = "unsafe-best-match"
+prerelease = "allow"

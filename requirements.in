@@ -3,5 +3,7 @@ numpy
 pandas
 seaborn
 scikit-learn
+scipy
+torch
 ipykernel
 ipython
