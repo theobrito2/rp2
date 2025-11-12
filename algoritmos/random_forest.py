@@ -24,7 +24,14 @@ except ImportError:
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import chi2_contingency
-from sklearn.metrics import classification_report
+from sklearn.metrics import (
+	accuracy_score,
+	classification_report,
+	confusion_matrix,
+	f1_score,
+	precision_score,
+	recall_score,
+)
 
 
 class RandomForestAnalysis:
@@ -45,30 +52,43 @@ class RandomForestAnalysis:
 		self.is_using_rapids: bool = 'cudf' in pd.__name__
 		self.encoders: dict[str, LabelEncoder] = {}
 		self.model: Optional[RandomForestClassifier] = None
+		self.df_processed: Optional[pd.DataFrame] = None
 		self.df_encoded: Optional[pd.DataFrame] = None
 		self.feature_importance: Optional[pd.Series] = None
 		self.sorted_corr: Optional[pd.Series] = None
+		# Métricas de avaliação
+		self.accuracy: Optional[float] = None
+		self.precision: Optional[float] = None
+		self.recall: Optional[float] = None
+		self.f1: Optional[float] = None
+		self.confusion_mat: Optional[np.ndarray] = None
 
 	def preprocess_data(self) -> None:
 		"""Preprocessa os dados: codificação binária e codificação de rótulos."""
 		print('Preprocessando dados...')
 
+		# Criar cópia para evitar modificar o dataframe original
+		df_copy = self.df.copy()
+
 		# Distribuição das classes antes da conversão
 		print('\nDistribuição das classes (antes):')
-		print(self.df[self.eval_column].value_counts(normalize=True))
+		print(df_copy[self.eval_column].value_counts(normalize=True))
 
 		# Converter para binário: 0 = Evadidos, 1 = Outros
-		self.df[self.eval_column] = (self.df[self.eval_column] != 'Evadidos').astype(int)
+		df_copy[self.eval_column] = (df_copy[self.eval_column] != 'Evadidos').astype(int)
 
 		print('\nDistribuição das classes (depois):')
-		print(self.df[self.eval_column].value_counts(normalize=True))
+		print(df_copy[self.eval_column].value_counts(normalize=True))
+
+		# Armazenar cópia processada para uso em outros métodos
+		self.df_processed = df_copy
 
 		# Transformar todas as colunas categóricas para numéricas
-		self.df_encoded = self.df[[self.eval_column, *self.wanted_columns]].copy()
+		self.df_encoded = df_copy[[self.eval_column, *self.wanted_columns]].copy()
 
 		for col in self.wanted_columns:
 			le = LabelEncoder()
-			self.df_encoded[col] = le.fit_transform(self.df[col])
+			self.df_encoded[col] = le.fit_transform(df_copy[col])
 			self.encoders[col] = le
 
 		print('\nDados preprocessados!')
@@ -108,7 +128,7 @@ class RandomForestAnalysis:
 		correlations: dict[str, float] = {}
 
 		for col in self.wanted_columns:
-			correlations[col] = cramers(self.df[col], self.df[self.eval_column])
+			correlations[col] = cramers(self.df_processed[col], self.df_processed[self.eval_column])
 
 		self.sorted_corr = pd.Series(correlations).sort_values(ascending=False)
 
@@ -136,8 +156,24 @@ class RandomForestAnalysis:
 
 		y_pred = self.model.predict(X_test)
 
-		print('\nRelatório de Classificação:')
-		print(classification_report(y_test, y_pred))
+		# Calcular métricas
+		self.accuracy = accuracy_score(y_test, y_pred)
+		self.precision = precision_score(y_test, y_pred, average='binary', zero_division=0)
+		self.recall = recall_score(y_test, y_pred, average='binary', zero_division=0)
+		self.f1 = f1_score(y_test, y_pred, average='binary', zero_division=0)
+		self.confusion_mat = confusion_matrix(y_test, y_pred)
+
+		print('\n' + '=' * 60)
+		print('MÉTRICAS DE AVALIAÇÃO')
+		print('=' * 60)
+		print(f'Accuracy:  {self.accuracy:.4f}')
+		print(f'Precision: {self.precision:.4f}')
+		print(f'Recall:    {self.recall:.4f}')
+		print(f'F1 Score:  {self.f1:.4f}')
+		print('=' * 60)
+
+		print('\nRelatório de Classificação Detalhado:')
+		print(classification_report(y_test, y_pred, target_names=['Evadido', 'Ativo/Concluído']))
 
 		# Calcular importância das features
 		if not self.is_using_rapids:
@@ -149,13 +185,35 @@ class RandomForestAnalysis:
 			print('\nTop 10 Features Mais Importantes:')
 			print(self.feature_importance.head(10))
 
+	def plot_confusion_matrix(self) -> None:
+		"""Plota matriz de confusão."""
+		if self.is_using_rapids:
+			print('\nPlots não disponíveis com RAPIDS')
+			return
+
+		print('\nGerando matriz de confusão...')
+
+		plt.figure(figsize=(8, 6))
+		sns.heatmap(
+			self.confusion_mat,
+			annot=True,
+			fmt='d',
+			cmap='Blues',
+			xticklabels=['Evadido', 'Ativo/Concluído'],
+			yticklabels=['Evadido', 'Ativo/Concluído'],
+		)
+		plt.xlabel('Predição')
+		plt.ylabel('Real')
+		plt.title('Matriz de Confusão - Random Forest')
+		plt.show()
+
 	def plot_feature_analysis(self) -> None:
 		"""Plota análise de importância de features vs correlação."""
 		if self.is_using_rapids:
 			print('\nPlots não disponíveis com RAPIDS')
 			return
 
-		print('\nGerando visualização...')
+		print('\nGerando visualização de features...')
 
 		# Plotando a importância das features x correlação para colunas com correlação > 0.2
 		important_features = self.sorted_corr[self.sorted_corr > 0.2].index.tolist()
@@ -185,24 +243,33 @@ class RandomForestAnalysis:
 		plt.grid(True)
 		plt.show()
 
-	def save_analysis(self, filename: str = 'feature_analysis.csv') -> None:
+	def save_analysis(self, filename: str = 'feature_analysis.csv', metrics_filename: str = 'random_forest_metrics.csv') -> None:
 		"""
-		Salva análise de features em CSV.
+		Salva análise de features e métricas em CSV.
 
 		Args:
-			filename: Nome do arquivo para salvar
+			filename: Nome do arquivo para salvar análise de features
+			metrics_filename: Nome do arquivo para salvar métricas
 		"""
 		if self.is_using_rapids:
 			print('\nExportação não disponível com RAPIDS')
 			return
 
+		# Salvar análise de features
 		feature_analysis = pd.DataFrame({
 			'Feature Importance': self.feature_importance,
 			"Cramér's V Correlation": self.sorted_corr,
 		})
-
 		feature_analysis.to_csv(filename)
-		print(f'\nAnálise salva em {filename}')
+		print(f'\nAnálise de features salva em {filename}')
+
+		# Salvar métricas de avaliação
+		metrics_df = pd.DataFrame({
+			'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+			'Value': [self.accuracy, self.precision, self.recall, self.f1],
+		})
+		metrics_df.to_csv(metrics_filename, index=False)
+		print(f'Métricas de avaliação salvas em {metrics_filename}')
 
 	def run(self) -> None:
 		"""Executa pipeline completo de análise Random Forest."""
@@ -213,6 +280,7 @@ class RandomForestAnalysis:
 		self.preprocess_data()
 		self.calculate_correlations()
 		self.train_model()
+		self.plot_confusion_matrix()
 		self.plot_feature_analysis()
 		self.save_analysis()
 
