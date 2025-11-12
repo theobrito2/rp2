@@ -15,7 +15,16 @@ except ImportError:
 import matplotlib.pyplot as plt
 import seaborn as sns
 import torch
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.metrics import (
+	accuracy_score,
+	classification_report,
+	confusion_matrix,
+	f1_score,
+	precision_score,
+	recall_score,
+	roc_auc_score,
+	roc_curve,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from torch import nn, optim
@@ -121,6 +130,12 @@ class NeuralNetworkAnalysis:
 		self.test_labels: Optional[np.ndarray] = None
 		self.test_predictions: Optional[np.ndarray] = None
 		self.test_probabilities: Optional[np.ndarray] = None
+		# Métricas de avaliação
+		self.accuracy: Optional[float] = None
+		self.precision: Optional[float] = None
+		self.recall: Optional[float] = None
+		self.f1: Optional[float] = None
+		self.roc_auc: Optional[float] = None
 
 	def preprocess_data(self) -> None:
 		"""Preprocessa os dados: codificação binária, codificação de rótulos e normalização."""
@@ -135,7 +150,13 @@ class NeuralNetworkAnalysis:
 		print(df_copy[self.eval_column].value_counts(normalize=True))
 
 		# Converter para binário: 0 = Evadidos, 1 = Outros
-		df_copy[self.eval_column] = (df_copy[self.eval_column] != 'Evadidos').astype(int)
+		# Verificar se a coluna já está em formato numérico ou é string
+		if df_copy[self.eval_column].dtype == 'object':
+			# Coluna contém strings, fazer conversão normal
+			df_copy[self.eval_column] = (df_copy[self.eval_column] != 'Evadidos').astype(int)
+		else:
+			# Coluna já é numérica, assumir que 0 = Evadidos, 1 = Outros
+			print('(Coluna já está em formato numérico)')
 
 		print('\nDistribuição das classes (depois):')
 		print(df_copy[self.eval_column].value_counts(normalize=True))
@@ -325,15 +346,28 @@ class NeuralNetworkAnalysis:
 		self.test_predictions = np.array(all_predictions)
 		self.test_probabilities = np.array(all_probabilities)
 
-		# Relatório de classificação
-		print('\nRelatório de Classificação:')
+		# Calcular métricas
+		self.accuracy = accuracy_score(self.test_labels, self.test_predictions)
+		self.precision = precision_score(self.test_labels, self.test_predictions, average='binary', zero_division=0)
+		self.recall = recall_score(self.test_labels, self.test_predictions, average='binary', zero_division=0)
+		self.f1 = f1_score(self.test_labels, self.test_predictions, average='binary', zero_division=0)
+		self.roc_auc = roc_auc_score(self.test_labels, self.test_probabilities)
+
+		print('\n' + '=' * 60)
+		print('MÉTRICAS DE AVALIAÇÃO')
+		print('=' * 60)
+		print(f'Accuracy:  {self.accuracy:.4f}')
+		print(f'Precision: {self.precision:.4f}')
+		print(f'Recall:    {self.recall:.4f}')
+		print(f'F1 Score:  {self.f1:.4f}')
+		print(f'ROC-AUC:   {self.roc_auc:.4f}')
+		print('=' * 60)
+
+		# Relatório de classificação detalhado
+		print('\nRelatório de Classificação Detalhado:')
 		print(
 			classification_report(self.test_labels, self.test_predictions, target_names=['Evadido', 'Ativo/Concluído']),
 		)
-
-		# Score ROC-AUC
-		roc_auc = roc_auc_score(self.test_labels, self.test_probabilities)
-		print(f'\nROC-AUC Score: {roc_auc:.4f}')
 
 	def plot_training_history(self) -> None:
 		"""Plota métricas de treinamento e validação."""
@@ -419,15 +453,17 @@ class NeuralNetworkAnalysis:
 		)
 		print(f'\nModelo salvo em {filepath}')
 
-	def save_analysis(self, filename: str = 'neural_network_analysis.csv') -> None:
+	def save_analysis(self, history_filename: str = 'neural_network_training_history.csv', metrics_filename: str = 'neural_network_metrics.csv') -> None:
 		"""
-		Salva histórico de treinamento em CSV.
+		Salva histórico de treinamento e métricas em CSV.
 
 		Args:
-			filename: Nome do arquivo para salvar
+			history_filename: Nome do arquivo para salvar histórico de treinamento
+			metrics_filename: Nome do arquivo para salvar métricas
 		"""
 		import pandas as pd
 
+		# Salvar histórico de treinamento
 		history_df = pd.DataFrame({
 			'epoch': range(1, len(self.train_losses) + 1),
 			'train_loss': self.train_losses,
@@ -435,9 +471,16 @@ class NeuralNetworkAnalysis:
 			'train_accuracy': self.train_accuracies,
 			'val_accuracy': self.val_accuracies,
 		})
+		history_df.to_csv(history_filename, index=False)
+		print(f'\nHistórico de treinamento salvo em {history_filename}')
 
-		history_df.to_csv(filename, index=False)
-		print(f'\nHistórico de treinamento salvo em {filename}')
+		# Salvar métricas de avaliação
+		metrics_df = pd.DataFrame({
+			'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC-AUC'],
+			'Value': [self.accuracy, self.precision, self.recall, self.f1, self.roc_auc],
+		})
+		metrics_df.to_csv(metrics_filename, index=False)
+		print(f'Métricas de avaliação salvas em {metrics_filename}')
 
 	def run(self, epochs: int = 20, batch_size: int = 1024, lr: float = 0.001) -> None:
 		"""
